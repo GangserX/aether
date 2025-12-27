@@ -7,7 +7,9 @@ import { Deployments } from './components/Deployments';
 import { Auth } from './components/Auth';
 import { InfoPage } from './components/InfoPage';
 import { Profile } from './components/Profile';
+import { ExecutionDashboard } from './components/ExecutionDashboard';
 import { View, User, WorkflowNode, WorkflowEdge, NodeType } from './types';
+import { storageService } from './services/storageService';
 
 // --- DATA PERSISTENCE LAYER ---
 const DB_KEY = 'aether_core_db_v1';
@@ -39,8 +41,52 @@ const App: React.FC = () => {
   ]);
   const [edges, setEdges] = useState<WorkflowEdge[]>([]);
 
-  // 1. Session Restoration on Mount
+  // 1. Session Restoration on Mount & OAuth Callback Handling
   useEffect(() => {
+    // Check for OAuth callback token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const oauthError = urlParams.get('error');
+    
+    if (oauthError) {
+      console.error('OAuth error:', oauthError);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    if (token) {
+      // OAuth callback - verify token and get user info
+      fetch('http://localhost:8080/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log('OAuth response:', data);
+          if (data.success && data.user) {
+            const userData = data.user;
+            const oauthUser: User = {
+              id: userData.id,
+              name: userData.name || userData.email?.split('@')[0] || 'User',
+              email: userData.email,
+              avatar: userData.avatar || userData.picture || `https://api.dicebear.com/7.x/shapes/svg?seed=${userData.email}`,
+              token: token,
+              joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+            };
+            console.log('Created OAuth user:', oauthUser);
+            handleLogin(oauthUser);
+          } else {
+            console.error('OAuth response missing user data:', data);
+          }
+        })
+        .catch(err => console.error('OAuth verification failed:', err))
+        .finally(() => {
+          // Clean URL regardless of result
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+      return;
+    }
+    
+    // Normal session restoration
     const storedUserSession = localStorage.getItem('aether_user_session');
     if (storedUserSession) {
       try {
@@ -81,6 +127,11 @@ const App: React.FC = () => {
   const handleLogin = (incomingUser: User) => {
     const db = loadDB();
     const existingData = db[incomingUser.email];
+
+    // Initialize user data in the new storage service
+    if (!storageService.getUserData(incomingUser.email)) {
+      storageService.initUserData(incomingUser);
+    }
 
     if (existingData) {
         // --- LOGIN: Restore existing state ---
@@ -136,10 +187,33 @@ const App: React.FC = () => {
             setNodes={setNodes}
             edges={edges}
             setEdges={setEdges}
+            user={user}
           />
         );
       case 'DEPLOYMENTS':
-        return <Deployments onNavigate={setCurrentView} nodes={nodes} />;
+        return (
+          <Deployments 
+            onNavigate={setCurrentView} 
+            nodes={nodes} 
+            edges={edges}
+            user={user}
+            onEditWorkflow={(workflowId) => {
+              // Load workflow from storage and switch to builder
+              if (user?.email) {
+                const workflows = storageService.getWorkflows(user.email);
+                const workflow = workflows.find(w => w.id === workflowId);
+                if (workflow) {
+                  setNodes(workflow.nodes);
+                  setEdges(workflow.edges);
+                  setCurrentView('BUILDER');
+                }
+              }
+            }}
+          />
+        );
+      
+      case 'EXECUTIONS':
+        return <ExecutionDashboard onNavigate={setCurrentView} user={user} />;
       
       case 'PROFILE':
         return user ? <Profile user={user} onNavigate={setCurrentView} nodes={nodes} /> : <Auth onLogin={handleLogin} />;

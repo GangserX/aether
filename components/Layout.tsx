@@ -12,7 +12,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ currentView, setCurrentView, children, user, onLogout }) => {
-  const isAppView = currentView === 'BUILDER' || currentView === 'DEPLOYMENTS' || currentView === 'PROFILE';
+  const isAppView = currentView === 'BUILDER' || currentView === 'DEPLOYMENTS' || currentView === 'PROFILE' || currentView === 'EXECUTIONS';
 
   return (
     <div className="min-h-screen w-full bg-black text-cream font-sans overflow-hidden relative selection:bg-cherry selection:text-white">
@@ -51,6 +51,12 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, setCurrentView, chi
                   className={`px-5 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${currentView === 'BUILDER' ? 'bg-cream text-black font-bold shadow-lg' : 'text-cream/60 hover:text-cream hover:bg-white/5'}`}
                 >
                   Workflows
+                </button>
+                <button 
+                  onClick={() => setCurrentView('EXECUTIONS')}
+                  className={`px-5 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all ${currentView === 'EXECUTIONS' ? 'bg-cream text-black font-bold shadow-lg' : 'text-cream/60 hover:text-cream hover:bg-white/5'}`}
+                >
+                  Runs
                 </button>
                 <button 
                   onClick={() => setCurrentView('DEPLOYMENTS')}

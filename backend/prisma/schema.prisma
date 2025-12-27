@@ -1,0 +1,322 @@
+// Prisma Schema for Aether Workflow Engine
+// This is a comprehensive schema supporting n8n-like automation
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Using SQLite for simplicity - no database setup required
+// Change to "postgresql" if you want to use PostgreSQL
+datasource db {
+  provider = "sqlite"
+}
+
+// ============ USER & AUTH ============
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  passwordHash  String?
+  avatar        String?
+  role          UserRole @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  workflows     Workflow[]
+  credentials   Credential[]
+  executions    WorkflowExecution[]
+  apiKeys       ApiKey[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  ENTERPRISE
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  name        String
+  keyHash     String   @unique
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ============ WORKFLOWS ============
+
+model Workflow {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean        @default(false)
+  settings    Json?          // General workflow settings
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // The workflow definition (nodes & edges)
+  nodes       WorkflowNode[]
+  edges       WorkflowEdge[]
+
+  // Owner
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Execution history
+  executions  WorkflowExecution[]
+  
+  // Triggers
+  webhooks    WebhookTrigger[]
+  schedules   ScheduleTrigger[]
+
+  @@map("workflows")
+}
+
+model WorkflowNode {
+  id          String   @id @default(uuid())
+  nodeId      String   // The frontend node ID
+  type        NodeType
+  name        String
+  position    Json     // { x: number, y: number }
+  config      Json     // Node-specific configuration
+  credentials String?  // Reference to credential ID if needed
+  
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, nodeId])
+  @@map("workflow_nodes")
+}
+
+enum NodeType {
+  // Triggers
+  TRIGGER_WEBHOOK
+  TRIGGER_SCHEDULE
+  TRIGGER_FORM
+  TRIGGER_EVENT
+  TRIGGER_MANUAL
+  
+  // Core Actions
+  ACTION_HTTP
+  ACTION_CODE
+  ACTION_SET
+  ACTION_MERGE
+  ACTION_SPLIT
+  ACTION_FILTER
+  ACTION_SWITCH
+  ACTION_LOOP
+  ACTION_WAIT
+  ACTION_RESPOND
+  
+  // Integrations
+  ACTION_EMAIL
+  ACTION_SLACK
+  ACTION_DISCORD
+  ACTION_TELEGRAM
+  ACTION_GOOGLE_SHEETS
+  ACTION_DATABASE
+  ACTION_S3
+  
+  // AI Actions
+  ACTION_AI_CHAT
+  ACTION_AI_SUMMARIZE
+  ACTION_AI_CLASSIFY
+  ACTION_AI_TRANSFORM
+  
+  // Utilities
+  ACTION_FUNCTION
+  ACTION_ERROR_TRIGGER
+  ACTION_SUBWORKFLOW
+}
+
+model WorkflowEdge {
+  id          String   @id @default(uuid())
+  edgeId      String   // The frontend edge ID
+  sourceNodeId String
+  targetNodeId String
+  condition   Json?    // Conditional routing rules
+
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_edges")
+}
+
+// ============ TRIGGERS ============
+
+model WebhookTrigger {
+  id          String   @id @default(uuid())
+  path        String   @unique // Unique webhook path
+  method      String   @default("POST") // HTTP method
+  isActive    Boolean  @default(true)
+  authType    String?  // none, basic, header, etc.
+  authConfig  Json?    // Auth configuration
+  createdAt   DateTime @default(now())
+
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("webhook_triggers")
+}
+
+model ScheduleTrigger {
+  id          String   @id @default(uuid())
+  cronExpr    String   // Cron expression
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("schedule_triggers")
+}
+
+// ============ CREDENTIALS ============
+
+model Credential {
+  id          String         @id @default(uuid())
+  name        String
+  type        CredentialType
+  data        String         // Encrypted JSON string
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credentials")
+}
+
+enum CredentialType {
+  API_KEY
+  OAUTH2
+  BASIC_AUTH
+  SMTP
+  DATABASE
+  AWS
+  GOOGLE
+  SLACK
+  CUSTOM
+}
+
+// ============ EXECUTIONS ============
+
+model WorkflowExecution {
+  id          String          @id @default(uuid())
+  status      ExecutionStatus @default(PENDING)
+  mode        ExecutionMode   @default(MANUAL)
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  error       String?
+  retryCount  Int             @default(0)
+  data        Json?           // Input data that triggered the execution
+
+  workflowId  String
+  workflow    Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id])
+
+  // Node execution steps
+  nodeExecutions NodeExecution[]
+
+  @@map("workflow_executions")
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+  WAITING
+}
+
+enum ExecutionMode {
+  MANUAL
+  WEBHOOK
+  SCHEDULE
+  RETRY
+  SUBWORKFLOW
+}
+
+model NodeExecution {
+  id            String   @id @default(uuid())
+  nodeId        String   // Reference to workflow node
+  nodeName      String
+  status        ExecutionStatus @default(PENDING)
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  inputData     Json?
+  outputData    Json?
+  error         String?
+
+  executionId   String
+  execution     WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@map("node_executions")
+}
+
+// ============ JOB QUEUE ============
+
+model QueuedJob {
+  id          String   @id @default(uuid())
+  type        String   // Job type (workflow_execution, scheduled_trigger, etc.)
+  payload     Json
+  status      JobStatus @default(PENDING)
+  priority    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  failedAt    DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, scheduledAt])
+  @@map("queued_jobs")
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ============ LOGS & AUDIT ============
+
+model ExecutionLog {
+  id          String   @id @default(uuid())
+  level       LogLevel
+  message     String
+  nodeId      String?
+  data        Json?
+  timestamp   DateTime @default(now())
+  
+  executionId String?
+
+  @@index([executionId, timestamp])
+  @@map("execution_logs")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}

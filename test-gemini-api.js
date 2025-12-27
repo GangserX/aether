@@ -3,7 +3,7 @@
  * Tests the Gemini API connection and model availability
  */
 
-const API_KEY = "AIzaSyDNf57Y2k9CLmVMvNFHog2pmRdR4MNwc1E";
+const API_KEY = "AIzaSyDThyaBd2S7KLlDglsUD_jY_kfNVVNw7zI";
 const MODEL = "gemini-3-flash-preview";
 
 async function testGeminiAPI() {

@@ -13,7 +13,23 @@ export enum NodeType {
   DATABASE = 'DATABASE',
   SLACK = 'SLACK',
   EMAIL = 'EMAIL',
-  PARSER = 'PARSER'
+  PARSER = 'PARSER',
+  // New automation node types
+  HTTP_REQUEST = 'HTTP_REQUEST',
+  CODE = 'CODE',
+  SWITCH = 'SWITCH',
+  LOOP = 'LOOP',
+  WAIT = 'WAIT',
+  FILTER = 'FILTER',
+  MERGE = 'MERGE',
+  SET = 'SET',
+  AI_CHAT = 'AI_CHAT',
+  AI_SUMMARIZE = 'AI_SUMMARIZE',
+  SCHEDULE = 'SCHEDULE',
+  FORM = 'FORM',
+  // Webhook & API node types
+  TRIGGER_WEBHOOK = 'TRIGGER_WEBHOOK',
+  ACTION_RESPOND = 'ACTION_RESPOND',
 }
 
 export interface Attachment {
@@ -35,8 +51,42 @@ export interface NodeData {
   // Integrations specific data
   recipient?: string;
   subject?: string;
+  // Email sender - Gmail OAuth
+  senderEmail?: string;
+  credentialId?: string;
+  emailTemplate?: string;
+  // Webhook & API specific data
+  webhookPath?: string;
+  httpMethod?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  responseMode?: 'onReceived' | 'onCompleted';
+  statusCode?: number;
+  contentType?: string;
+  responseBody?: string;
+  headers?: Record<string, string>;
+  // HTTP Request node
+  url?: string;
+  queryParams?: Record<string, string>;
+  bodyType?: 'json' | 'form' | 'raw';
+  body?: string;
+  // Flow control specific data
+  duration?: number;
+  durationUnit?: 'seconds' | 'minutes' | 'hours';
+  condition?: string;
+  filterExpr?: string;
+  batchSize?: number;
+  // Transform/Set node
+  transformCode?: string;
+  setValues?: Record<string, any>;
+  // Split/Merge
+  splitField?: string;
+  mergeMode?: 'combine' | 'wait';
   // Generated file download
   downloadUrl?: string;
+  // Node color for customization
+  color?: string;
+  // Multiple endpoints support
+  inputEndpoints?: number;  // Number of input endpoints (default 1)
+  outputEndpoints?: number; // Number of output endpoints (default 1)
 }
 
 export interface WorkflowNode {
@@ -50,6 +100,8 @@ export interface WorkflowEdge {
   id: string;
   source: string;
   target: string;
+  sourceEndpoint?: number; // Which output endpoint (0-indexed)
+  targetEndpoint?: number; // Which input endpoint (0-indexed)
 }
 
 export interface LogEntry {
@@ -76,6 +128,7 @@ export type View =
   | 'DEPLOYMENTS'
   | 'PROFILE'
   | 'ARCHITECTURE'
+  | 'EXECUTIONS'
   // Platform Pages
   | 'PLATFORM_OBSERVABILITY' 
   | 'PLATFORM_EVALUATIONS' 

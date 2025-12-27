@@ -1,144 +1,293 @@
+# Aether Orchestrate
 
-# AETHER / ORCHESTRATE
+A visual workflow automation platform with built-in AI agents. Build powerful automations with drag-and-drop nodes, webhook triggers, and free AI models.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-3.4.0-D90429.svg)
-![Stack](https://img.shields.io/badge/tech-React_19_•_TypeScript_•_Gemini_AI-000000.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
 
-> **The Engine of Intelligence.**  
-> A  platform for visually building, orchestrating, and deploying autonomous AI agent workflows.
+## 🚀 Features
 
----
-
-## ✧ Overview
-
-**Aether** is a visual IDE for Large Language Model (LLM) orchestration. Unlike traditional chat interfaces, Aether treats prompts as functions and context as immutable state. It allows architects to construct deterministic Directed Acyclic Graphs (DAGs) where nodes represent AI agents, triggers, or integrations.
-
-The platform is designed with a **"Glass Engine"** aesthetic—utilizing deep blacks, kinetic typography, and complex glassmorphism to create a workspace that feels like a futuristic cockpit.
-
-## ✧ Key Features
-
-### 🧠 Visual DAG Builder
-- **Drag-and-Drop Topology**: Construct complex chains using a physics-based node editor.
-- **Type-Safe Handoffs**: Pass context (text, JSON, files) between nodes with strict schema validation.
-- **Agent Library**: Pre-configured templates for Development, Sales, Marketing, and Operations.
-
-### ⚡ Gemini Core
-- **Multi-Model Orchestration**: Seamlessly switch between `gemini-2.5-flash` (for speed) and `gemini-3.0-pro` (for reasoning) within the same workflow.
-- **Search Grounding**: Built-in support for Google Search integration for factual accuracy.
-
-### 📂 Multi-Modal Context
-- **PDF Parsing**: Drag and drop PDF documents directly into nodes. The system parses text client-side using `pdfjs-dist` to provide context to agents.
-- **PDF Generation**: "Doc Generator" agents can output formatted PDF reports directly to the browser.
-
-### 💾 Local State Persistence
-- **No-Backend Storage**: Utilizes a robust `localStorage` database simulation.
-- **User Sessions**: Workflows are automatically saved and tied to email addresses.
-- **Guest-to-User Handoff**: Start building as a guest; your graph is preserved when you sign up.
-
-### 📊 Observability & Metrics
-- **Live Console**: Real-time execution logs with status indicators.
-- **Dynamic Profile**: Stats (Compute usage, Vector storage, Cost) are calculated dynamically based on the complexity of your active graph.
+- **Visual Workflow Builder** - Drag & drop interface for creating automation workflows
+- **AI Agent Nodes** - Integrate AI models (Gemini, Mimo) with custom system prompts
+- **Webhook Triggers** - Automatic webhook endpoints for every workflow
+- **Real-time Execution** - Synchronous webhook responses with AI results
+- **Free AI Models** - Uses OpenRouter with free model options
+- **Node-based Architecture** - Trigger, Agent, Condition, Output nodes
+- **Live Updates** - Real-time node execution status and results
+- **Zero Cost** - Completely free to run and use
 
 ---
 
-## 🛠️ Tech Stack
+## 📋 Prerequisites
 
-*   **Framework**: React 19 (Hooks, Context API)
-*   **Language**: TypeScript
-*   **Styling**: Tailwind CSS (Custom "Cherry/Cream" configuration)
-*   **AI SDK**: `@google/genai`
-*   **Icons**: Lucide React
-*   **PDF Processing**: `pdfjs-dist`, `jspdf`
+Before you begin, ensure you have the following installed:
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-*   Node.js v18+
-*   A Google Gemini API Key
-
-### Installation
-
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/your-username/aether-orchestrate.git
-    cd aether-orchestrate
-    ```
-
-2.  **Install dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Configure Environment**
-    Create a `.env` file in the root directory:
-    ```env
-    # Required for AI generation
-    API_KEY=your_google_gemini_api_key_here
-    ```
-
-4.  **Start the Development Server**
-    ```bash
-    npm start
-    ```
+- **Node.js** >= 18.0.0 ([Download](https://nodejs.org/))
+- **npm** >= 9.0.0 (comes with Node.js)
+- **Git** ([Download](https://git-scm.com/))
 
 ---
 
-## 🎨 Design System
+## 🛠️ Installation
 
-Aether follows a strict design language defined in `index.html` (Tailwind config):
+### 1. Clone the Repository
 
-| Color Name | Hex | Usage |
-| :--- | :--- | :--- |
-| **Black** | `#000000` | Primary Background |
-| **Cherry** | `#D90429` | Accents, Active States, Brand |
-| **Cream** | `#F4F1EA` | Typography, Borders |
-| **Glass** | `rgba(15,15,15,0.6)` | Panels, Modals |
-
-**Typography**:
-*   *Display*: Space Grotesk (Headings)
-*   *Body*: Inter (UI Text)
-*   *Accent*: Playfair Display (Italicized hero text)
-
----
-
-## 📂 Project Structure
-
+```bash
+git clone https://github.com/yourusername/aether-orchestrate.git
+cd aether-orchestrate
 ```
-src/
-├── components/
-│   ├── Auth.tsx          # Login/Signup with session persistence
-│   ├── Builder.tsx       # The core Node Graph editor
-│   ├── Deployments.tsx   # Dashboard for active endpoints
-│   ├── InfoPage.tsx      # Static content (Architecture, Docs, etc.)
-│   ├── Landing.tsx       # Marketing homepage with scroll reveals
-│   ├── Layout.tsx        # Global shell and navigation
-│   └── Profile.tsx       # User stats and settings
-├── services/
-│   └── geminiService.ts  # Interface with Google GenAI SDK
-├── types.ts              # TypeScript interfaces (Node, User, LogEntry)
-├── App.tsx               # Routing and Data Layer (loadDB/saveDB)
-└── index.tsx             # Entry point
+
+### 2. Install Dependencies
+
+#### Frontend
+```bash
+cd aether-orchestrate
+npm install
+```
+
+#### Backend
+```bash
+cd backend
+npm install
 ```
 
 ---
 
-## 🛡️ Architecture Note
+## ⚙️ Configuration
 
-**Current State**: This application runs primarily **Client-Side**.
-*   The "Database" is a JSON object stored in the browser's LocalStorage.
-*   AI calls are made directly from the browser to Google's API (using the key provided in build env).
+### Required API Keys
 
-**Production Roadmap**:
-*   The `backend/` folder contains the reference implementation for a secure Node.js/Express gateway.
-*   In a production environment, the `geminiService.ts` would point to this gateway rather than calling Google directly, ensuring API keys remain server-side.
+The platform uses OpenRouter for AI model access. An API key is already configured, but you can use your own:
+
+1. Get a free API key from [OpenRouter](https://openrouter.ai/)
+2. Update the key in `backend/src/engine/nodeHandlers.ts`:
+
+```typescript
+const OPENROUTER_API_KEY = 'your-api-key-here';
+```
+
+### Supported AI Models
+
+The following free models are pre-configured:
+- `gemini-2.5-flash` → Google Gemini 2.0 Flash (Free)
+- `gemini-3-pro-preview` → Google Gemini 2.0 Flash (Free)
+- `mimo-v2-flash` → Xiaomi Mimo V2 Flash (Free)
 
 ---
 
-## © License
+## 🚦 Running the Application
 
-Designed & Engineered in 2025.
-MIT License.
+### Start Backend Server (Terminal 1)
+```bash
+cd backend
+npx tsx src/server.ts
+```
+
+Backend will run on **http://localhost:8080**
+
+### Start Frontend (Terminal 2)
+```bash
+cd aether-orchestrate
+npm run dev
+```
+
+Frontend will run on **http://localhost:3000** (or port shown in terminal)
+
+---
+
+## � Project Structure
+
+```
+aether-orchestrate/
+├── aether-orchestrate/          # Frontend application
+│   ├── components/              # React components
+│   │   ├── Auth.tsx            # Authentication UI
+│   │   ├── Builder.tsx         # Workflow builder (main canvas)
+│   │   ├── Deployments.tsx     # Deployment management
+│   │   ├── Landing.tsx         # Landing page
+│   │   ├── Layout.tsx          # App layout wrapper
+│   │   └── Profile.tsx         # User profile
+│   ├── services/               
+│   │   └── geminiService.ts    # AI service integration
+│   ├── App.tsx                 # Main app component
+│   ├── index.tsx               # Entry point
+│   ├── types.ts                # TypeScript type definitions
+│   ├── package.json
+│   └── vite.config.ts          # Vite configuration
+│
+├── backend/                     # Backend server
+│   ├── src/
+│   │   ├── server.ts           # Express server & API routes
+│   │   ├── config/
+│   │   │   └── env.ts          # Environment configuration
+│   │   ├── engine/
+│   │   │   ├── executionEngine.ts   # Workflow execution engine
+│   │   │   └── nodeHandlers.ts      # Node type handlers
+│   │   ├── middleware/
+│   │   │   └── security.ts     # Security middleware
+│   │   ├── services/
+│   │   │   ├── agentRegistry.ts     # Agent service registry
+│   │   │   ├── proxy.ts             # Proxy service
+│   │   │   └── webhookService.ts    # Webhook management
+│   │   ├── types/
+│   │   │   └── workflow.types.ts    # Type definitions
+│   │   └── utils/
+│   │       ├── encryption.ts   # Encryption utilities
+│   │       └── logger.ts       # Logging service
+│   └── package.json
+│
+├── README.md                    # This file
+└── metadata.json               # Project metadata
+```
+
+---
+
+## 🎯 Usage Guide
+
+### 1. Creating Your First Workflow
+
+1. **Open the app** at http://localhost:3000
+2. **Add a Trigger node** - Click "Add Node" → Select "Trigger"
+3. **Add an AI Agent node** - Click "Add Node" → Select "Agent"
+4. **Connect the nodes** - Drag from Trigger's output to Agent's input
+5. **Configure the Agent**:
+   - Set a **System Prompt** (e.g., "You are a helpful assistant")
+   - Choose an **AI Model** (e.g., Gemini 2.5 Flash)
+6. **Deploy** - Click the "Deploy" button
+7. **Copy the webhook URL** shown in the deployment dialog
+
+### 2. Testing Your Workflow
+
+Use PowerShell or curl to test the webhook:
+
+```powershell
+# PowerShell
+$result = Invoke-RestMethod -Uri "http://localhost:8080/webhook/wf_YOUR_ID/trigger" -Method POST -ContentType "application/json" -Body '{"question": "What is the capital of India?"}'
+$result.response.answer
+```
+
+```bash
+# Curl (Linux/Mac)
+curl -X POST http://localhost:8080/webhook/wf_YOUR_ID/trigger \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the capital of India?"}'
+```
+
+### 3. Understanding the Response
+
+```json
+{
+  "success": true,
+  "executionId": "uuid-here",
+  "response": {
+    "answer": "The capital of India is New Delhi.",
+    "aiResponse": "The capital of India is New Delhi.",
+    "agent": "Your Agent Name",
+    "model": "google/gemini-2.0-flash-exp:free"
+  }
+}
+```
+
+---
+
+## 🔌 API Endpoints
+
+### Workflows
+
+- **POST** `/api/v1/workflows` - Create a new workflow
+- **PUT** `/api/v1/workflows/:id` - Update a workflow
+- **GET** `/api/v1/workflows/:id` - Get workflow details
+- **DELETE** `/api/v1/workflows/:id` - Delete a workflow
+
+### Webhooks
+
+- **POST** `/api/v1/webhooks` - Register a webhook
+- **ALL** `/webhook/:workflowId/trigger` - Execute workflow via webhook
+
+---
+
+## 🔧 Environment Variables
+
+Create a `.env` file in the `backend/` directory:
+
+```env
+# Server Configuration
+PORT=8080
+NODE_ENV=development
+
+# OpenRouter API
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+
+# Security
+JWT_SECRET=your-jwt-secret-here
+```
+
+---
+
+## 🎨 Available Node Types
+
+### Trigger Nodes
+- **TRIGGER** - Webhook trigger for external events
+- **TRIGGER_WEBHOOK** - HTTP webhook listener
+
+### Action Nodes
+- **AGENT** - AI agent with configurable model & system prompt
+- **ACTION_AI_CHAT** - AI chat completion
+- **ACTION_AI_SUMMARIZE** - AI text summarization
+- **ACTION_HTTP** - HTTP request
+
+### Output Nodes
+- **OUTPUT** - Display results
+- **ACTION_RESPOND** - Custom webhook response
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend Won't Start
+
+**Error: `Module not found`**
+```bash
+cd backend
+npm install
+```
+
+**Error: `Port 8080 already in use`**
+```bash
+# Windows
+netstat -ano | findstr :8080
+taskkill /PID <PID> /F
+```
+
+### Webhook Returns 404
+
+**Solution:** Re-deploy the workflow from the frontend. Webhooks are stored in-memory and reset when the backend restarts.
+
+### AI Agent Not Responding
+
+1. Check the OpenRouter API key is valid
+2. Check backend console for error logs
+3. Verify the model name is correctly configured
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Database persistence
+- [ ] User authentication
+- [ ] Scheduled workflows (cron)
+- [ ] More AI models
+- [ ] Email/Slack integrations
+- [ ] Workflow templates
+- [ ] Analytics dashboard
+
+---
+
+## 📄 License
+
+MIT License - 2025
+
+---
+
+**Built with ❤️ for the future of AI automation**

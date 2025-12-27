@@ -1,16 +1,53 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, Github, Chrome, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Github, Chrome, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { User as UserType } from '../types';
 
 interface AuthProps {
   onLogin: (user: UserType) => void;
 }
 
+// Local storage keys
+const USERS_DB_KEY = 'aether_users_db';
+
+// Simple hash function for password (for demo - in production use bcrypt on backend)
+const hashPassword = (password: string): string => {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `hash_${Math.abs(hash).toString(36)}_${password.length}`;
+};
+
+// Get users database
+const getUsersDB = (): Record<string, { name: string; email: string; passwordHash: string; createdAt: string }> => {
+  try {
+    const data = localStorage.getItem(USERS_DB_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+};
+
+// Save user to database
+const saveUser = (email: string, name: string, passwordHash: string) => {
+  const db = getUsersDB();
+  db[email] = {
+    name,
+    email,
+    passwordHash,
+    createdAt: new Date().toISOString(),
+  };
+  localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
+};
+
 export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -35,6 +72,11 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     if (!isLogin && !formData.name) {
       setError("Full Name is required for account creation.");
       return;
@@ -46,20 +88,68 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setTimeout(() => {
       setIsLoading(false);
       
-      // Create User Session Object
-      // In a real app, this would come from the backend API response
-      const userProfile: UserType = {
-        id: `user_${Math.random().toString(36).substr(2, 9)}`,
-        name: isLogin ? (formData.name || formData.email.split('@')[0]) : formData.name, // Use email handle if name missing on login mock
-        email: formData.email,
-        // Generate a deterministic avatar based on email
-        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.email}`,
-        token: `mock_jwt_${Date.now()}`,
-        joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) // Capture signup date
-      };
+      const usersDB = getUsersDB();
+      const passwordHash = hashPassword(formData.password);
+      
+      if (isLogin) {
+        // LOGIN - Check if user exists and password matches
+        const existingUser = usersDB[formData.email];
+        
+        if (!existingUser) {
+          setError("No account found with this email. Please sign up first.");
+          return;
+        }
+        
+        if (existingUser.passwordHash !== passwordHash) {
+          setError("Incorrect password. Please try again.");
+          return;
+        }
+        
+        // Login successful
+        const userProfile: UserType = {
+          id: `user_${formData.email.replace(/[^a-zA-Z0-9]/g, '')}`,
+          name: existingUser.name,
+          email: formData.email,
+          avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.email}`,
+          token: `jwt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          joinedAt: new Date(existingUser.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+        };
+        
+        onLogin(userProfile);
+        
+      } else {
+        // SIGNUP - Check if email already exists
+        if (usersDB[formData.email]) {
+          setError("An account with this email already exists. Please sign in.");
+          return;
+        }
+        
+        // Save new user with hashed password
+        saveUser(formData.email, formData.name, passwordHash);
+        
+        const userProfile: UserType = {
+          id: `user_${formData.email.replace(/[^a-zA-Z0-9]/g, '')}`,
+          name: formData.name,
+          email: formData.email,
+          avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.email}`,
+          token: `jwt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+        };
+        
+        onLogin(userProfile);
+      }
+    }, 1000);
+  };
 
-      onLogin(userProfile);
-    }, 1500);
+  // OAuth handlers - redirect to backend OAuth endpoints
+  const handleGithubAuth = () => {
+    // Redirect to backend GitHub OAuth endpoint
+    window.location.href = 'http://localhost:8080/api/auth/github';
+  };
+
+  const handleGoogleAuth = () => {
+    // Redirect to backend Google OAuth endpoint
+    window.location.href = 'http://localhost:8080/api/auth/google';
   };
 
   return (
@@ -93,11 +183,11 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
               {/* Social Auth */}
               <div className="grid grid-cols-2 gap-4 mb-8">
-                <button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group">
+                <button type="button" onClick={handleGithubAuth} className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group">
                   <Github className="w-4 h-4 text-gray-400 group-hover:text-white" />
                   <span className="text-xs font-bold text-gray-400 group-hover:text-white uppercase tracking-wider">Github</span>
                 </button>
-                <button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group">
+                <button type="button" onClick={handleGoogleAuth} className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all group">
                   <Chrome className="w-4 h-4 text-gray-400 group-hover:text-white" />
                   <span className="text-xs font-bold text-gray-400 group-hover:text-white uppercase tracking-wider">Google</span>
                 </button>
@@ -151,12 +241,19 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   <Lock className="absolute left-4 top-3.5 w-4 h-4 text-gray-500 group-focus-within:text-cherry transition-colors" />
                   <input 
                     name="password"
-                    type="password" 
-                    placeholder="Password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password (min. 6 characters)"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cherry/50 focus:ring-1 focus:ring-cherry/50 transition-all font-sans"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-11 pr-11 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cherry/50 focus:ring-1 focus:ring-cherry/50 transition-all font-sans"
                   />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-3.5 text-gray-500 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
 
                 <button 

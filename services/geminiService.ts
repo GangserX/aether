@@ -1,65 +1,67 @@
 
-import { GoogleGenAI } from "@google/genai";
+// OpenRouter API Service for AI Agent Responses
 
-// Initialize the client. 
-// Note: In a real production app, this would be proxied through a backend to protect the key.
-// For this client-side demo architecture, we assume process.env.API_KEY is available.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const OPENROUTER_API_KEY = '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';
+const OPENROUTER_MODEL = 'xiaomi/mimo-v2-flash:free';
+
+// Map frontend model names to OpenRouter model IDs
+const MODEL_MAP: Record<string, string> = {
+  'gemini-2.5-flash': 'google/gemini-2.0-flash-exp:free',
+  'gemini-3-pro-preview': 'google/gemini-2.0-flash-exp:free',
+  'mimo-v2-flash': 'xiaomi/mimo-v2-flash:free',
+  'openrouter-free': 'xiaomi/mimo-v2-flash:free',
+};
 
 export const generateAgentResponse = async (
   prompt: string,
   systemInstruction: string,
-  model: string = 'gemini-2.5-flash'
+  model: string = OPENROUTER_MODEL
 ): Promise<string> => {
   try {
-    if (!process.env.API_KEY) {
-      // Simulate response for demo purposes if no key is present, 
-      // ensuring the UI can be showcased without crashing.
-      console.warn("No API_KEY found. returning mock response.");
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      return `[Mock Output] Processed: "${prompt.slice(0, 20)}..." via ${model}.`;
-    }
-
-    // Heuristic: Enable Google Search tool if the prompt/system instruction implies searching.
-    const enableSearch = systemInstruction.toLowerCase().includes('web search') || 
-                         systemInstruction.toLowerCase().includes('search the web') ||
-                         systemInstruction.toLowerCase().includes('scrape');
-
-    const config: any = {
-        systemInstruction: systemInstruction,
-        temperature: 0.7,
-    };
+    const messages: any[] = [];
     
-    // Dynamically attach tool if needed
-    if (enableSearch) {
-        config.tools = [{ googleSearch: {} }];
+    // Add system instruction if provided
+    if (systemInstruction) {
+      messages.push({
+        role: 'system',
+        content: systemInstruction
+      });
     }
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: config
+    
+    // Add user prompt
+    messages.push({
+      role: 'user',
+      content: prompt
     });
 
-    let outputText = response.text || "No output generated.";
+    // Use the model mapping, fallback to default
+    const actualModel = MODEL_MAP[model] || OPENROUTER_MODEL;
+    console.log(`[AI Agent] Using model: ${actualModel} (requested: ${model})`);
+    console.log(`[AI Agent] System prompt: ${systemInstruction?.substring(0, 100)}...`);
 
-    // Handle Grounding Metadata (Append sources if search was used)
-    if (response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-        const chunks = response.candidates[0].groundingMetadata.groundingChunks;
-        const sources = chunks
-            .map((c: any) => c.web?.uri ? `- [${c.web.title || 'Source'}](${c.web.uri})` : null)
-            .filter(Boolean);
-            
-        if (sources.length > 0) {
-            // Deduplicate sources
-            const uniqueSources = [...new Set(sources)];
-            outputText += `\n\n### Sources\n${uniqueSources.join('\n')}`;
-        }
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: actualModel,
+        messages: messages
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message || 'OpenRouter API error');
     }
+
+    let outputText = data.choices?.[0]?.message?.content || 'No output generated.';
 
     return outputText;
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("OpenRouter API Error:", error);
     throw new Error("Failed to execute agent.");
   }
 };
