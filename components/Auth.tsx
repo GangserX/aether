@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowRight, Github, Chrome, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { User as UserType } from '../types';
@@ -141,15 +141,19 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     }, 1000);
   };
 
+  // Get API base URL from environment
+  // @ts-ignore - Vite provides this at runtime
+  const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:8080';
+
   // OAuth handlers - redirect to backend OAuth endpoints
   const handleGithubAuth = () => {
     // Redirect to backend GitHub OAuth endpoint
-    window.location.href = 'http://localhost:8080/api/auth/github';
+    window.location.href = API_BASE_URL + '/api/auth/github';
   };
 
   const handleGoogleAuth = () => {
     // Redirect to backend Google OAuth endpoint
-    window.location.href = 'http://localhost:8080/api/auth/google';
+    window.location.href = API_BASE_URL + '/api/auth/google';
   };
 
   return (

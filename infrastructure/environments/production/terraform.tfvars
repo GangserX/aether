@@ -1,0 +1,23 @@
+environment           = "production"
+project_name          = "aether"
+aws_region            = "eu-north-1"
+vpc_cidr              = "10.1.0.0/16"
+availability_zones    = ["eu-north-1a", "eu-north-1b"]
+backend_cpu           = 1024
+backend_memory        = 2048
+backend_desired_count = 2
+backend_min_count     = 2
+backend_max_count     = 10
+db_instance_class     = "db.t3.small"
+db_allocated_storage  = 50
+db_name               = "aether_db"
+db_username           = "aether_admin"
+redis_node_type       = "cache.t3.small"
+redis_num_cache_nodes = 2
+domain_name           = ""
+certificate_arn       = ""
+tags = {
+  Project     = "aether-orchestrate"
+  Environment = "production"
+  ManagedBy   = "terraform"
+}

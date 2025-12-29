@@ -1,4 +1,4 @@
-// Storage Service - Persistent data layer for Aether Orchestrate
+﻿// Storage Service - Persistent data layer for Aether Orchestrate
 
 import { WorkflowNode, WorkflowEdge, User } from '../types';
 
@@ -147,7 +147,7 @@ class StorageService {
       deployments: [],
       credentials: [],
       settings: {
-        apiGateway: 'http://localhost:8080/api/v1',
+        apiGateway: ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:8080') + '/api/v1',
         environment: 'development',
         defaultModel: 'gemini-2.5-flash',
         theme: 'dark',

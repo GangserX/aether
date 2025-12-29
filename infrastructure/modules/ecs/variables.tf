@@ -1,0 +1,12 @@
+variable "name_prefix" { type = string }
+variable "vpc_id" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "security_group_id" { type = string }
+variable "target_group_arn" { type = string }
+variable "ecr_repository_url" { type = string }
+variable "cpu" { type = number }
+variable "memory" { type = number }
+variable "desired_count" { type = number }
+variable "secrets_arn" { type = string }
+variable "db_secret_arn" { type = string }
+variable "jwt_secret_arn" { type = string }

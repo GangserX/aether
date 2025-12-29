@@ -70,7 +70,7 @@ export const Deployments: React.FC<DeploymentsProps> = ({ onNavigate, nodes, edg
     setOpenMenuId(null);
   };
 
-  const handleSaveCurrentWorkflow = () => {
+  const handleSaveCurrentWorkflow = async () => {
     if (!user?.email || !newWorkflowName.trim()) return;
     
     const workflowId = `wf_${Date.now()}`;
@@ -82,13 +82,13 @@ export const Deployments: React.FC<DeploymentsProps> = ({ onNavigate, nodes, edg
     );
     
     storageService.saveWorkflow(user.email, workflow);
-    storageService.createDeployment(user.email, workflow);
+    await storageService.createDeployment(user.email, workflow);
     
     setShowSaveModal(false);
     setNewWorkflowName('');
   };
 
-  const handleDeploySelectedWorkflow = () => {
+  const handleDeploySelectedWorkflow = async () => {
     if (!user?.email || !selectedWorkflowId) return;
     
     const workflow = workflows.find(w => w.id === selectedWorkflowId);
@@ -101,7 +101,7 @@ export const Deployments: React.FC<DeploymentsProps> = ({ onNavigate, nodes, edg
       return;
     }
     
-    storageService.createDeployment(user.email, workflow);
+    await storageService.createDeployment(user.email, workflow);
     setShowSelectWorkflowModal(false);
     setSelectedWorkflowId(null);
   };
@@ -116,14 +116,14 @@ export const Deployments: React.FC<DeploymentsProps> = ({ onNavigate, nodes, edg
   };
 
   const handleCopyEndpoint = (endpoint: string, deploymentId: string) => {
-    const fullUrl = `http://localhost:8080${endpoint}`;
+    const fullUrl = storageService.getWebhookUrl(endpoint);
     navigator.clipboard.writeText(fullUrl);
     setCopiedEndpoint(deploymentId);
     setTimeout(() => setCopiedEndpoint(null), 2000);
   };
 
   const handleTestEndpoint = async (deployment: Deployment) => {
-    const fullUrl = `http://localhost:8080${deployment.endpoint}`;
+    const fullUrl = storageService.getWebhookUrl(deployment.endpoint);
     try {
       const response = await fetch(fullUrl, {
         method: 'POST',
